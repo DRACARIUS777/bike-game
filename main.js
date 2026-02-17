@@ -691,7 +691,7 @@ function animate() {
 
 
     ///////////////
-    difficulty = 1 + score / 500;   // increases over time
+    difficulty = 1 + score / 1000;   // increases over time
 
     if (difficulty > maxDifficulty) difficulty = maxDifficulty;
 
@@ -832,7 +832,7 @@ function animate() {
     );
 
     // Score
-    score += delta * 10 * multiplier * (1 + difficulty * 0.5);
+    score += delta * 5 * multiplier * (1 + difficulty * 0.5);
     scoreElement.textContent =
         "Score: " + Math.floor(score) +
         " | Lv " + difficulty.toFixed(1);
@@ -913,4 +913,5 @@ window.addEventListener("resize", () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 
 });
+
 animate();
