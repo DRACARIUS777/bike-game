@@ -305,9 +305,7 @@ function createTrafficCar() {
 
     const geometry = new THREE.BoxGeometry(1.8, 1, 3.5);
     const material = new THREE.MeshStandardMaterial({
-    color: 0x3399ff,
-    emissive: 0x220000,
-    emissiveIntensity: 0.8
+    color: 0x3399ff   // blue
 });
 
     car.position.x = trafficLanes[Math.floor(Math.random() * trafficLanes.length)];
@@ -915,5 +913,6 @@ window.addEventListener("resize", () => {
 });
 
 animate();
+
 
 
