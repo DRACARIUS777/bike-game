@@ -305,10 +305,10 @@ function createTrafficCar() {
 
     const geometry = new THREE.BoxGeometry(1.8, 1, 3.5);
     const material = new THREE.MeshStandardMaterial({
-        color: Math.random() * 0xffffff
-    });
-
-    const car = new THREE.Mesh(geometry, material);
+    color: 0x3399ff,
+    emissive: 0x220000,
+    emissiveIntensity: 0.8
+});
 
     car.position.x = trafficLanes[Math.floor(Math.random() * trafficLanes.length)];
     car.position.y = 0.5;
@@ -763,7 +763,7 @@ function animate() {
     //TRAFFIC CAR
     traffic.forEach((car, index) => {
 
-        car.position.z += currentSpeed * 2;
+        car.position.z += currentSpeed * 1.4;
 
         const bikeBox = new THREE.Box3().setFromObject(bike);
         const carBox = new THREE.Box3().setFromObject(car);
@@ -915,4 +915,5 @@ window.addEventListener("resize", () => {
 });
 
 animate();
+
 
