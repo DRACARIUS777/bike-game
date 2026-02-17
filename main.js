@@ -696,7 +696,7 @@ function animate() {
 
 
     ///////////////
-    difficulty = 1 + score / 700;   // increases over time
+    difficulty = 1 + score / 600;   // increases over time
 
     if (difficulty > maxDifficulty) difficulty = maxDifficulty;
 
@@ -768,7 +768,7 @@ function animate() {
     //TRAFFIC CAR
     traffic.forEach((car, index) => {
 
-        car.position.z += currentSpeed * 1;
+        car.position.z += currentSpeed * 0.8;
 
         const bikeBox = new THREE.Box3().setFromObject(bike);
         const carBox = new THREE.Box3().setFromObject(car);
@@ -918,12 +918,4 @@ window.addEventListener("resize", () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 
 });
-
 animate();
-
-
-
-
-
-
-
