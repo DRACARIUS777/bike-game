@@ -304,9 +304,15 @@ for (let i = 0; i < 40; i++) {
 function createTrafficCar() {
 
     const geometry = new THREE.BoxGeometry(1.8, 1, 3.5);
+
     const material = new THREE.MeshStandardMaterial({
-    color: 0x3399ff   // blue
-});
+        color: 0x3399ff   // blue
+    });
+
+    const car = new THREE.Mesh(geometry, material);   // ⭐ MISSING LINE
+
+    car.castShadow = true;
+    car.receiveShadow = true;
 
     car.position.x = trafficLanes[Math.floor(Math.random() * trafficLanes.length)];
     car.position.y = 0.5;
@@ -315,6 +321,7 @@ function createTrafficCar() {
     scene.add(car);
     traffic.push(car);
 }
+
 setInterval(createTrafficCar, 2000);
 ////////////////
 
@@ -913,6 +920,7 @@ window.addEventListener("resize", () => {
 });
 
 animate();
+
 
 
 
