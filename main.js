@@ -310,7 +310,7 @@ function createTrafficCar() {
 
     car.position.x = trafficLanes[Math.floor(Math.random() * trafficLanes.length)];
     car.position.y = 0.5;
-    car.position.z = -120 - Math.random() * 100;
+    car.position.z = -60 - Math.random() * 100;
 
     scene.add(car);
     traffic.push(car);
@@ -913,6 +913,7 @@ window.addEventListener("resize", () => {
 });
 
 animate();
+
 
 
 
