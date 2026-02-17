@@ -691,7 +691,7 @@ function animate() {
 
 
     ///////////////
-    difficulty = 1 + score / 1000;   // increases over time
+    difficulty = 1 + score / 700;   // increases over time
 
     if (difficulty > maxDifficulty) difficulty = maxDifficulty;
 
@@ -915,3 +915,4 @@ window.addEventListener("resize", () => {
 });
 
 animate();
+
