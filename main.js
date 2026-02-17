@@ -761,7 +761,7 @@ function animate() {
     //TRAFFIC CAR
     traffic.forEach((car, index) => {
 
-        car.position.z += currentSpeed * 1.4;
+        car.position.z += currentSpeed * 0.8;
 
         const bikeBox = new THREE.Box3().setFromObject(bike);
         const carBox = new THREE.Box3().setFromObject(car);
@@ -913,6 +913,7 @@ window.addEventListener("resize", () => {
 });
 
 animate();
+
 
 
 
