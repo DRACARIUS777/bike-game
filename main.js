@@ -227,11 +227,8 @@ let nitroGain;
 let difficulty = 1;
 let maxDifficulty = 10;
 
-let baseSpawnDelay = 2000;
-let trafficSpawnDelay = 2500;
-
-let obstacleInterval;
-let trafficInterval;
+let baseSpawnDelay = 1800;
+let trafficSpawnDelay = 2200;
 /////////
 
 function initAudio() {
@@ -254,6 +251,17 @@ function initAudio() {
 
     engineOsc.start();
 
+    nitroOsc = audioContext.createOscillator();
+    nitroGain = audioContext.createGain();
+
+    nitroOsc.type = "sawtooth";
+    nitroGain.gain.value = 0;
+
+    nitroOsc.connect(nitroGain);
+    nitroGain.connect(audioContext.destination);
+
+    nitroOsc.start();
+
     // NITRO SOUND LAYER
     if (nitroActive) {
 
@@ -268,6 +276,7 @@ function initAudio() {
             audioContext.currentTime,
             0.1
         );
+        tank.material.emissive.set(0xff2200);
 
     } else {
 
@@ -276,6 +285,7 @@ function initAudio() {
             audioContext.currentTime,
             0.2
         );
+        tank.material.emissive.set(0x000000);
 
     }
     ///////
@@ -333,26 +343,52 @@ for (let i = 0; i < 40; i++) {
 // TRAFFIC CAR
 function createTrafficCar() {
 
-    const geometry = new THREE.BoxGeometry(1.8, 1, 3.5);
+    const carGroup = new THREE.Group();
 
-    const material = new THREE.MeshStandardMaterial({
-        color: 0x3399ff   // blue
-    });
+    // Body
+    const body = new THREE.Mesh(
+        new THREE.BoxGeometry(1.8, 1, 3.5),
+        new THREE.MeshStandardMaterial({ color: 0x3399ff })
+    );
+    body.position.y = 0.75;
+    carGroup.add(body);
 
-    const car = new THREE.Mesh(geometry, material);   // ⭐ MISSING LINE
+    // Cabin
+    const cabin = new THREE.Mesh(
+        new THREE.BoxGeometry(1.4, 0.7, 1.8),
+        new THREE.MeshStandardMaterial({ color: 0x111111 })
+    );
+    cabin.position.set(0, 1.3, -0.2);
+    carGroup.add(cabin);
 
-    car.castShadow = true;
-    car.receiveShadow = true;
+    // Wheel function
+    function createWheel() {
 
-    car.position.x = trafficLanes[Math.floor(Math.random() * trafficLanes.length)];
-    car.position.y = 0.5;
-    car.position.z = -60 - Math.random() * 100;
+    const wheel = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.45, 0.45, 0.35, 24),
+        new THREE.MeshStandardMaterial({ color: 0x111111 })
+    );
 
-    scene.add(car);
-    traffic.push(car);
+    // ⭐ FIX AXLE DIRECTION (motorcycle style)
+    wheel.rotation.z = Math.PI / 2;
+
+    return wheel;
 }
+    // 4 wheels
+    carGroup.add(createWheel(-0.9, 1.2));
+    carGroup.add(createWheel(0.9, 1.2));
+    carGroup.add(createWheel(-0.9, -1.2));
+    carGroup.add(createWheel(0.9, -1.2));
 
-setInterval(createTrafficCar, 2000);
+    // Lane spawn
+    const laneIndex = Math.floor(Math.random() * trafficLanes.length);
+    carGroup.position.x = trafficLanes[laneIndex];
+    carGroup.position.y = 0;
+    carGroup.position.z = -60 - Math.random() * 100;
+
+    scene.add(carGroup);
+    traffic.push(carGroup);
+}
 ////////////////
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -387,69 +423,153 @@ scene.add(directionalLight);
 
 
 
-//////////////////////
-// BIKE (BLOCK STYLE)
-//////////////////////
+// ======================
+// BIKE MODEL (CLEAN)
+// ======================
 
 const bike = new THREE.Group();
 
-// Body
-const bodyGeometry = new THREE.BoxGeometry(1, 0.5, 2);
-const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-body.position.y = 0.75;
-body.castShadow = true;
-bike.add(body);
+const black = new THREE.MeshStandardMaterial({ color: 0x111111 });
+const metal = new THREE.MeshStandardMaterial({ color: 0x888888 });
+const red = new THREE.MeshStandardMaterial({ color: 0xff0000 });
 
-// Front wheel
-const wheelGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.5, 16);
-const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
 
-const frontWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
-frontWheel.rotation.z = Math.PI / 2;
-frontWheel.position.set(0, 0.4, -0.9);
-frontWheel.castShadow = true;
+// ---------- WHEEL FUNCTION ----------
+function createWheel() {
+
+    const wheel = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.5, 0.5, 0.35, 24),
+        black
+    );
+
+    // Axle left-right (motorcycle orientation)
+    wheel.rotation.z = Math.PI / 2;
+
+    wheel.castShadow = true;
+    wheel.receiveShadow = true;
+
+    return wheel;
+}
+
+
+// ---------- WHEELS ----------
+const frontWheel = createWheel();
+frontWheel.position.set(0, 0.5, -1.6);
+
+const backWheel = createWheel();
+backWheel.position.set(0, 0.5, 1.6);
+
 bike.add(frontWheel);
-
-// Back wheel
-const backWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
-backWheel.rotation.z = Math.PI / 2;
-backWheel.position.set(0, 0.4, 0.9);
-backWheel.castShadow = true;
 bike.add(backWheel);
 
 
+// ---------- FRAME ----------
+const frame = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, 0.3, 2.6),
+    metal
+);
+frame.position.y = 1.0;
+bike.add(frame);
 
-const tronMaterial = new THREE.MeshBasicMaterial({
-    color: 0x00ffff,
-    transparent: true,
-    opacity: 0.7,
-    side: THREE.DoubleSide,
-    depthWrite: false
-});
 
-const streakCount = 150;
-const streakGeo = new THREE.BufferGeometry();
-const streakPositions = new Float32Array(streakCount * 3);
+// ---------- ENGINE BLOCK ----------
+const engine = new THREE.Mesh(
+    new THREE.BoxGeometry(0.8, 0.7, 1.0),
+    black
+);
+engine.position.set(0, 0.9, 0.3);
+bike.add(engine);
 
-streakGeo.setAttribute(
-    'position',
-    new THREE.BufferAttribute(streakPositions, 3)
+
+// ---------- FUEL TANK ----------
+const tank = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.45, 0.5, 1.2, 24),
+    red
+);
+tank.rotation.z = Math.PI / 2;
+tank.position.set(0, 1.25, -0.1);
+bike.add(tank);
+
+
+// ---------- SEAT ----------
+const seat = new THREE.Mesh(
+    new THREE.BoxGeometry(0.6, 0.2, 1.1),
+    black
+);
+seat.position.set(0, 1.2, 0.9);
+bike.add(seat);
+
+
+// ---------- FRONT FORK ----------
+const forkMat = metal;
+
+const fork1 = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.07, 0.07, 1.4, 12),
+    forkMat
+);
+fork1.position.set(-0.25, 1.0, -1.3);
+fork1.rotation.x = Math.PI / 6;
+
+const fork2 = fork1.clone();
+fork2.position.x = 0.25;
+
+bike.add(fork1);
+bike.add(fork2);
+
+
+// ---------- HANDLEBAR ----------
+const handle = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.05, 1.3, 12),
+    metal
+);
+handle.rotation.z = Math.PI / 2;
+handle.position.set(0, 1.5, -1.3);
+bike.add(handle);
+
+
+// ---------- HEADLIGHT ----------
+const headlight = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 16, 16),
+    new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xffffff,
+        emissiveIntensity: 1.5
+    })
+);
+headlight.position.set(0, 1.3, -1.9);
+bike.add(headlight);
+
+
+// ---------- TAIL LIGHT ----------
+const tailLight = new THREE.Mesh(
+    new THREE.BoxGeometry(0.2, 0.1, 0.2),
+    new THREE.MeshStandardMaterial({
+        color: 0xff0000,
+        emissive: 0xff0000,
+        emissiveIntensity: 2
+    })
+);
+tailLight.position.set(0, 1.2, 1.9);
+bike.add(tailLight);
+
+
+// ---------- EXHAUST ----------
+const exhaust = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 0.9, 12),
+    metal
 );
 
-const streakMat = new THREE.PointsMaterial({
-    color: 0x00ffff,
-    size: 0.1,
-    transparent: true,
-    opacity: 0.8
-});
+// Horizontal pipe
+exhaust.rotation.z = Math.PI / 2;
 
-const streaks = new THREE.Points(streakGeo, streakMat);
-scene.add(streaks);
-streaks.visible = false;
+// Move closer to bike body and slightly lower
+exhaust.position.set(-0.22, 0.95, 1.1);
+
+bike.add(exhaust);
 
 
-
+// ---------- POSITION ----------
+bike.position.y = -0.2;
 
 scene.add(bike);
 
@@ -563,8 +683,19 @@ for (let i = 0; i < totalSegments; i++) {
 //////////////////////
 // CAMERA POSITION
 //////////////////////
+// Smooth follow X
+camera.position.x += (bike.position.x - camera.position.x) * 0.12;
 
-camera.position.set(0, 5, 10);
+// Fixed chase height and distance
+camera.position.y = 5.5;
+camera.position.z = bike.position.z + 10;
+
+// Look slightly ahead of bike
+camera.lookAt(
+    bike.position.x,
+    bike.position.y + 0.5,
+    bike.position.z - 12
+);
 
 //////////////////////
 // CONTROLS
@@ -602,50 +733,89 @@ const obstacles = [];
 
 function spawnObstacle() {
 
-    // 4 lane positions (must match bike lanes)
-    const lanes = [-4.5, -1.5, 1.5, 4.5];
+    const laneIndex = Math.floor(Math.random() * lanes.length);
+    const xPos = lanes[laneIndex];
 
-    // Different obstacle shapes
-    const shapes = [
-        new THREE.BoxGeometry(2, 2, 2),
-        new THREE.CylinderGeometry(1, 1, 2, 16),
-        new THREE.ConeGeometry(1.2, 2, 6)
-    ];
+    const type = Math.floor(Math.random() * 3);
 
-    const geometry = shapes[Math.floor(Math.random() * shapes.length)];
-    const material = new THREE.MeshStandardMaterial({ color: 0xff4444 });
+    let obstacle;
 
-    const obstacle = new THREE.Mesh(geometry, material);
+    // Traffic cone
+    if (type === 0) {
+        const cone = new THREE.Group();
 
-    // Snap to random lane
-    obstacle.position.x = lanes[Math.floor(Math.random() * lanes.length)];
+        const base = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.8, 0.8, 0.2, 16),
+            new THREE.MeshStandardMaterial({ color: 0xff6600 })
+        );
 
-    obstacle.position.y = 1;     // Lift above ground
-    obstacle.position.z = -120;  // Spawn far ahead
+        const body = new THREE.Mesh(
+            new THREE.ConeGeometry(0.5, 1.5, 16),
+            new THREE.MeshStandardMaterial({ color: 0xff3300 })
+        );
+        body.position.y = 0.85;
 
+        cone.add(base);
+        cone.add(body);
+
+        obstacle = cone;
+    }
+
+    // Road barrier
+    else if (type === 1) {
+        obstacle = new THREE.Mesh(
+            new THREE.BoxGeometry(2.5, 1.2, 1),
+            new THREE.MeshStandardMaterial({ color: 0xff4444 })
+        );
+        obstacle.position.y = 0.6;
+    }
+
+    // Oil barrel
+    else {
+        obstacle = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.7, 0.7, 1.5, 20),
+            new THREE.MeshStandardMaterial({ color: 0x333333 })
+        );
+        obstacle.position.y = 0.75;
+    }
+
+    obstacle.position.x = xPos;
+    obstacle.position.z = -120;
     obstacle.castShadow = true;
 
     scene.add(obstacle);
     obstacles.push(obstacle);
 }
-function startSpawning() {
 
-    clearInterval(obstacleInterval);
-    clearInterval(trafficInterval);
+//
+let obstacleTimer = 0;
+let trafficTimer = 0;
 
-    obstacleInterval = setInterval(() => {
+function updateSpawning(delta, currentSpeed) {
 
+    const obstacleRate =
+        1.8 / difficulty;   // seconds between obstacles
+
+    const trafficRate =
+        2.3 / difficulty;   // seconds between traffic
+
+    obstacleTimer += delta;
+    trafficTimer += delta;
+
+    if (obstacleTimer > obstacleRate) {
         spawnObstacle();
+        obstacleTimer = 0;
+    }
 
-    }, baseSpawnDelay / difficulty);
-
-    trafficInterval = setInterval(() => {
-
+    if (trafficTimer > trafficRate) {
         createTrafficCar();
-
-    }, trafficSpawnDelay / difficulty);
-
+        trafficTimer = 0;
+    }
 }
+
+setTimeout(() => {
+    document.getElementById("controlsHUD").style.opacity = "0.4";
+}, 4000);
 
 //////////////////////
 // GAME VARIABLES
@@ -723,7 +893,9 @@ function animate() {
     }
     const nitroBar = document.getElementById("nitroBar");
     nitroBar.style.width = (nitro / maxNitro * 100) + "%";
-    roadTexture.offset.y -= currentSpeed * 0.02;
+   
+    roadTexture.offset.y -= currentSpeed * 0.03;
+
 
 
     ///////////////
@@ -749,12 +921,8 @@ function animate() {
         );
 
     }
-
-    //spawn rate
-    if (Math.floor(score) % 100 === 0) {
-        startSpawning();
-    }
-
+    //SPAWNING
+    updateSpawning(delta, currentSpeed);
 
     // Dynamic FOV
     camera.fov = 75 + currentSpeed * 5;
@@ -762,7 +930,7 @@ function animate() {
 
     // Move Road
     roadSegments.forEach(segment => {
-        segment.position.z += currentSpeed;
+        segment.position.z += currentSpeed * 1.2;
 
         if (segment.position.z > camera.position.z + segmentLength) {
             segment.position.z -= segmentLength * totalSegments;
@@ -799,7 +967,13 @@ function animate() {
     //TRAFFIC CAR
     traffic.forEach((car, index) => {
 
-        car.position.z += currentSpeed * 0.8;
+        car.position.z += currentSpeed * 1.1;
+
+        car.children.forEach(child => {
+            if (child.geometry && child.geometry.type === "CylinderGeometry") {
+                child.rotation.x += currentSpeed * 0.2;
+            }
+        });
 
         const bikeBox = new THREE.Box3().setFromObject(bike);
         const carBox = new THREE.Box3().setFromObject(car);
@@ -817,7 +991,7 @@ function animate() {
     // Obstacles
     obstacles.forEach((obstacle, index) => {
 
-        obstacle.position.z += currentSpeed;
+        obstacle.position.z += currentSpeed * 1.15;
 
         const bikeBox = new THREE.Box3().setFromObject(bike);
         const obstacleBox = new THREE.Box3().setFromObject(obstacle);
@@ -834,7 +1008,11 @@ function animate() {
 
     // Lane snap movement
     bike.position.x += (lanes[currentLane] - bike.position.x) * 0.2;
+    const targetLean =
+        (lanes[currentLane] - bike.position.x) * -0.1;
 
+    bike.rotation.z += (targetLean - bike.rotation.z) * 0.1;
+    const speedShake = currentSpeed * 0.02;
     // Camera follow
     camera.position.x += (bike.position.x - camera.position.x) * 0.1;
 
@@ -843,15 +1021,6 @@ function animate() {
         bike.position.y,
         bike.position.z - 5
     );
-
-    //CONTROLS popoff
-    const controlsPopup = document.getElementById("controlsPopup");
-
-    // Hide after 3 seconds
-    setTimeout(() => {
-        controlsPopup.classList.add("hidden");
-    }, 2000);
-
     // Score
     score += delta * 5 * multiplier * (1 + difficulty * 0.5);
     const displayScore = Math.floor(score);
@@ -864,6 +1033,11 @@ function animate() {
         camera.position.y += (Math.random() - 0.5) * shakeIntensity;
         shakeIntensity *= 0.9;
     }
+    // CAMERA MICRO SHAKE (controlled)
+    const camShake = Math.min(currentSpeed * 0.003, 0.015);
+
+    camera.position.y += Math.sin(performance.now() * 0.01) * camShake;
+    camera.position.x += (Math.random() - 0.5) * camShake * 0.2;
 
     renderer.render(scene, camera);
 }
@@ -935,3 +1109,29 @@ window.addEventListener("resize", () => {
 
 });
 animate();
+
+//////////////////////
+// START OVERLAY
+/////////////////////
+
+const startOverlay = document.getElementById("startOverlay");
+const startText = document.getElementById("startText");
+
+async function startSequence() {
+
+    await wait(800);
+    startText.textContent = "SET";
+
+    await wait(800);
+    startText.textContent = "GO";
+
+    await wait(600);
+
+    startOverlay.classList.add("hidden");
+}
+
+function wait(ms) {
+    return new Promise(res => setTimeout(res, ms));
+}
+
+startSequence();
