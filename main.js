@@ -1,5 +1,4 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-const finalScoreElement = document.getElementById("finalScore");
 
 //ROAD TEXTURE
 function createNeonRoadTexture() {
@@ -131,14 +130,22 @@ function createTree(x, z) {
     trees.push({ mesh: group });
 }
 
-//GAMEOVER
+///GAMEOVER
+
 function gameOver() {
     isGameOver = true;
+    shakeIntensity = 0.5;
 
-    document.getElementById("finalScore").innerText =
-        `Final Score: ${score}`;
+    createCrashEffect(bike.position);
+    playCrashSound();
 
-    document.getElementById("gameOverScreen").style.display = "block";
+    clearInterval(obstacleInterval);
+    clearInterval(trafficInterval);
+
+    finalScoreElement.textContent =
+        "Final Score: " + Math.floor(score);
+
+    document.getElementById("gameOver").style.display = "flex";
 }
 
 //////////////////////
@@ -635,6 +642,7 @@ let speed = 0.8;
 const maxSpeed = 5;
 let score = 0;
 const scoreElement = document.getElementById("score");
+const finalScoreElement = document.getElementById("finalScore"); // ADD THIS
 let nitro = 100;
 let maxNitro = 100;
 
@@ -660,6 +668,7 @@ function animate() {
     }
 
     const delta = clock.getDelta();
+    score += delta * 5;
 
     multiplier = nitroActive ? nitroMultiplier : 1;
 
@@ -776,34 +785,22 @@ function animate() {
     });
 
     //TRAFFIC CAR
-    traffic.forEach((car, index) => {
+   traffic.forEach((car, index) => {
 
-        car.position.z += currentSpeed * 0.8;
+    car.position.z += currentSpeed * 0.8;
 
-        const bikeBox = new THREE.Box3().setFromObject(bike);
-        const carBox = new THREE.Box3().setFromObject(car);
+    const bikeBox = new THREE.Box3().setFromObject(bike);
+    const carBox = new THREE.Box3().setFromObject(car);
 
-        if (bikeBox.intersectsBox(carBox)) {
-            isGameOver = true;
-            shakeIntensity = 0.5;
+    if (bikeBox.intersectsBox(carBox)) {
+        gameOver();
+    }
 
-            createCrashEffect(bike.position);
-            playCrashSound();
-
-            clearInterval(obstacleInterval);   // 
-            clearInterval(trafficInterval);    // 
-
-            scoreElement.textContent = Math.floor(score) +
-                " | Lv " + difficulty.toFixed(1);
-            gameOverScreen.style.display = "flex";
-        }
-
-        if (car.position.z > 20) {
-            scene.remove(car);
-            traffic.splice(index, 1);
-        }
-
-    });
+    if (car.position.z > 20) {
+        scene.remove(car);
+        traffic.splice(index, 1);
+    }
+});
 
     // Obstacles
     obstacles.forEach((obstacle, index) => {
@@ -814,16 +811,7 @@ function animate() {
         const obstacleBox = new THREE.Box3().setFromObject(obstacle);
 
         if (bikeBox.intersectsBox(obstacleBox)) {
-            isGameOver = true;
-            shakeIntensity = 0.5;
-            createCrashEffect(bike.position);
-
-            clearInterval(obstacleInterval);   // 
-            clearInterval(trafficInterval);    // 
-
-            scoreElement.textContent = Math.floor(score) +
-                " | Lv " + difficulty.toFixed(1);
-            gameOverScreen.style.display = "flex";
+            gameOver();
         }
 
         if (obstacle.position.z > 20) {
@@ -926,4 +914,3 @@ window.addEventListener("resize", () => {
 
 });
 animate();
-
