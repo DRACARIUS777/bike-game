@@ -131,6 +131,16 @@ function createTree(x, z) {
     trees.push({ mesh: group });
 }
 
+//GAMEOVER
+function gameOver() {
+    isGameOver = true;
+
+    document.getElementById("finalScore").innerText =
+        `Final Score: ${score}`;
+
+    document.getElementById("gameOverScreen").style.display = "block";
+}
+
 //////////////////////
 // BASIC SETUP
 //////////////////////
@@ -783,8 +793,7 @@ function animate() {
             clearInterval(obstacleInterval);   // 
             clearInterval(trafficInterval);    // 
 
-            scoreElement.textContent =
-                "Score: " + Math.floor(score) +
+            scoreElement.textContent = Math.floor(score) +
                 " | Lv " + difficulty.toFixed(1);
             gameOverScreen.style.display = "flex";
         }
@@ -812,8 +821,7 @@ function animate() {
             clearInterval(obstacleInterval);   // 
             clearInterval(trafficInterval);    // 
 
-            scoreElement.textContent =
-                "Score: " + Math.floor(score) +
+            scoreElement.textContent = Math.floor(score) +
                 " | Lv " + difficulty.toFixed(1);
             gameOverScreen.style.display = "flex";
         }
@@ -838,8 +846,7 @@ function animate() {
 
     // Score
     score += delta * 5 * multiplier * (1 + difficulty * 0.5);
-    scoreElement.textContent =
-        "Score: " + Math.floor(score) +
+    scoreElement.textContent = Math.floor(score) +
         " | Lv " + difficulty.toFixed(1);
 
     // Screen shake
@@ -919,3 +926,4 @@ window.addEventListener("resize", () => {
 
 });
 animate();
+
