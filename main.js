@@ -44,7 +44,28 @@ function createNeonRoadTexture() {
 }
 const roadTexture = createNeonRoadTexture();
 
-//////////////////
+// =======================
+// DAY NIGHT SYSTEM
+// =======================
+
+let timeOfDay =
+    Number(localStorage.getItem("timeOfDay")) || 0;
+
+const dayDuration = 120;   // seconds per full cycle
+
+const neonMaterials = new Set();
+
+function registerNeon(mat) {
+    if (mat && mat.emissive) neonMaterials.add(mat);
+}
+
+const daySky = new THREE.Color(0x87ceeb);
+const nightSky = new THREE.Color(0x050510);
+
+const dayFog = new THREE.Color(0x87ceeb);
+const nightFog = new THREE.Color(0x0a0f2a);
+
+//////////
 
 const bestScoreElement = document.getElementById("bestScore");
 
@@ -164,16 +185,16 @@ function gameOver() {
 //////////////////////
 // BASIC SETUP
 //////////////////////
-
+//SCENE CREATION
 const scene = new THREE.Scene();
 const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
 const skyMaterial = new THREE.MeshBasicMaterial({
-    color: 0x87CEEB,
+    color: daySky,
     side: THREE.BackSide
 });
 const sky = new THREE.Mesh(skyGeometry, skyMaterial);
 scene.add(sky);
-scene.fog = new THREE.Fog(0x0a0f2a, 20, 200);
+scene.fog = new THREE.Fog(dayFog, 20, 200);
 
 const camera = new THREE.PerspectiveCamera(
     75,
@@ -181,6 +202,28 @@ const camera = new THREE.PerspectiveCamera(
     0.1,
     1000
 );
+
+
+// =======================
+// HORIZON GLOW
+// =======================
+
+const horizonGeo = new THREE.RingGeometry(120, 260, 64);
+
+const horizonMat = new THREE.MeshBasicMaterial({
+    color: 0xff00ff,
+    transparent: true,
+    opacity: 0.35,
+    side: THREE.DoubleSide,
+    depthWrite: false
+});
+
+const horizonGlow = new THREE.Mesh(horizonGeo, horizonMat);
+
+horizonGlow.rotation.x = -Math.PI / 2;
+horizonGlow.position.y = -2;
+
+scene.add(horizonGlow);
 
 //SUN CREATION
 const sunGeometry = new THREE.CircleGeometry(20, 64);
@@ -308,26 +351,41 @@ const roadMaterial = new THREE.MeshStandardMaterial({
     emissive: 0x111111,
     roughness: 0.6
 });
+registerNeon(roadMaterial);
 
-//MOUNTAIN CREATION
+// ======================
+// NEON MOUNTAINS
+// ======================
 
 for (let i = 0; i < 20; i++) {
 
-    const geometry = new THREE.ConeGeometry(5 + Math.random() * 5, 15, 4);
-    const material = new THREE.MeshStandardMaterial({ color: 0x556b2f });
+    const geometry = new THREE.ConeGeometry(
+        8 + Math.random() * 6,
+        18,
+        4
+    );
+
+    const material = new THREE.MeshStandardMaterial({
+        color: 0x220044,
+        emissive: 0xff00ff,
+        emissiveIntensity: 0.4,
+        wireframe: true
+    });
+    registerNeon(roadMaterial);
+    material.emissiveIntensity = 1.8;
     const mountain = new THREE.Mesh(geometry, material);
 
-    // Force mountains outside road area
     const side = Math.random() < 0.5 ? -1 : 1;
 
     mountain.position.set(
-        side * (30 + Math.random() * 80), // far from road
-        7,
-        -Math.random() * 300
+        side * (35 + Math.random() * 80),
+        9,
+        -Math.random() * 400
     );
 
     scene.add(mountain);
     mountains.push(mountain);
+
 }
 
 //SPAWN TREES
@@ -345,7 +403,7 @@ function createTrafficCar() {
 
     const carGroup = new THREE.Group();
 
-    // Body
+    // ---------- BODY ----------
     const body = new THREE.Mesh(
         new THREE.BoxGeometry(1.8, 1, 3.5),
         new THREE.MeshStandardMaterial({ color: 0x3399ff })
@@ -353,7 +411,7 @@ function createTrafficCar() {
     body.position.y = 0.75;
     carGroup.add(body);
 
-    // Cabin
+    // ---------- CABIN ----------
     const cabin = new THREE.Mesh(
         new THREE.BoxGeometry(1.4, 0.7, 1.8),
         new THREE.MeshStandardMaterial({ color: 0x111111 })
@@ -361,30 +419,56 @@ function createTrafficCar() {
     cabin.position.set(0, 1.3, -0.2);
     carGroup.add(cabin);
 
-    // Wheel function
-    function createWheel() {
+    // ---------- WHEELS ----------
+    function createWheel(x, z) {
+        const wheel = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.4, 0.4, 0.4, 16),
+            new THREE.MeshStandardMaterial({ color: 0x222222 })
+        );
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(x, 0.4, z);
+        return wheel;
+    }
 
-    const wheel = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.45, 0.45, 0.35, 24),
-        new THREE.MeshStandardMaterial({ color: 0x111111 })
-    );
-
-    // ⭐ FIX AXLE DIRECTION (motorcycle style)
-    wheel.rotation.z = Math.PI / 2;
-
-    return wheel;
-}
-    // 4 wheels
     carGroup.add(createWheel(-0.9, 1.2));
     carGroup.add(createWheel(0.9, 1.2));
     carGroup.add(createWheel(-0.9, -1.2));
     carGroup.add(createWheel(0.9, -1.2));
 
-    // Lane spawn
-    const laneIndex = Math.floor(Math.random() * trafficLanes.length);
+
+    // ============================
+    // ADVANCED SAFE SPAWN LOGIC
+    // ============================
+
+    const SAFE_DISTANCE = 40;   // distance in front of bike
+
+    let laneIndex;
+    let spawnZ;
+
+    let attempts = 0;
+
+    do {
+
+        laneIndex =
+            Math.floor(Math.random() * trafficLanes.length);
+
+        spawnZ = -60 - Math.random() * 120;
+
+        attempts++;
+
+        // Safety break (prevents infinite loop)
+        if (attempts > 10) break;
+
+    } while (
+        laneIndex === currentLane &&
+        Math.abs(spawnZ - bike.position.z) < SAFE_DISTANCE
+    );
+
+
     carGroup.position.x = trafficLanes[laneIndex];
     carGroup.position.y = 0;
-    carGroup.position.z = -60 - Math.random() * 100;
+    carGroup.position.z = spawnZ;
+
 
     scene.add(carGroup);
     traffic.push(carGroup);
@@ -538,6 +622,7 @@ const headlight = new THREE.Mesh(
 );
 headlight.position.set(0, 1.3, -1.9);
 bike.add(headlight);
+registerNeon(headlight.material);
 
 
 // ---------- TAIL LIGHT ----------
@@ -551,6 +636,8 @@ const tailLight = new THREE.Mesh(
 );
 tailLight.position.set(0, 1.2, 1.9);
 bike.add(tailLight);
+
+registerNeon(tailLight.material);
 
 
 // ---------- EXHAUST ----------
@@ -851,6 +938,43 @@ function animate() {
     }
 
     const delta = clock.getDelta();
+    // =======================
+    // DAY NIGHT UPDATE
+    // =======================
+
+    timeOfDay += delta / dayDuration;
+    if (timeOfDay > 1) timeOfDay -= 1;
+
+    // Save periodically (not every frame)
+    if (Math.floor(performance.now()) % 2000 < 16) {
+        localStorage.setItem("timeOfDay", timeOfDay);
+    }
+
+    const t = Math.sin(timeOfDay * Math.PI * 2) * 0.5 + 0.5;
+
+    // Sky
+    sky.material.color.lerpColors(daySky, nightSky, t);
+
+    // Fog
+    scene.fog.color.lerpColors(dayFog, nightFog, t);
+
+    // Lighting
+    ambientLight.intensity = 0.6 + (1 - t) * 0.6;
+    directionalLight.intensity = 0.4 + (1 - t) * 0.8;
+
+    // Neon intensity
+    const neonBoost = 0.6 + Math.pow(t, 2) * 2.2;
+
+    for (let mat of neonMaterials) {
+        mat.emissiveIntensity = neonBoost;
+    }
+
+    //////////////////////////
+    //SUN
+    const sunAngle = timeOfDay * Math.PI * 2;
+
+    synthSun.position.y = 40 * Math.sin(sunAngle);
+    synthSun.position.z = -200 + 50 * Math.cos(sunAngle);
 
     multiplier = nitroActive ? nitroMultiplier : 1;
 
@@ -893,7 +1017,7 @@ function animate() {
     }
     const nitroBar = document.getElementById("nitroBar");
     nitroBar.style.width = (nitro / maxNitro * 100) + "%";
-   
+
     roadTexture.offset.y -= currentSpeed * 0.03;
 
 
@@ -1040,6 +1164,22 @@ function animate() {
     camera.position.x += (Math.random() - 0.5) * camShake * 0.2;
 
     renderer.render(scene, camera);
+
+    // =======================
+    // HORIZON COLOR SHIFT
+    // =======================
+
+    const horizonColor = new THREE.Color();
+
+    const sunsetColor = new THREE.Color(0xff4fd8);
+    const nightColor = new THREE.Color(0x4400ff);
+
+    horizonColor.lerpColors(sunsetColor, nightColor, t);
+
+    horizonMat.color.copy(horizonColor);
+
+    // stronger at night
+    horizonMat.opacity = 0.2 + t * 0.6;
 }
 function createCrashEffect(position) {
 
