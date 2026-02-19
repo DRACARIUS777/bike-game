@@ -819,6 +819,20 @@ window.addEventListener("keydown", (e) => {
 
 });
 
+///////NITRO MOBILE
+const nitroContainer =
+    document.getElementById("nitroContainer");
+
+// Hold to boost
+nitroContainer.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    nitroActive = true;
+}, { passive: false });
+
+nitroContainer.addEventListener("touchend", () => {
+    nitroActive = false;
+}); f
+
 // ======================
 // SWIPE CONTROLS (MULTI-TOUCH SAFE)
 // ======================
@@ -1114,8 +1128,22 @@ function animate() {
         }
 
     }
-    const nitroBar = document.getElementById("nitroBar");
-    nitroBar.style.width = (nitro / maxNitro * 100) + "%";
+    const nitroFill = document.getElementById("nitroFill");
+
+    nitroFill.style.height =
+        (nitro / maxNitro * 100) + "%";
+
+    if (nitroActive) {
+        nitroContainer.style.transform = "scale(0.9)";
+    } else {
+        nitroContainer.style.transform = "scale(1)";
+    }
+    if (nitroActive) {
+        nitroContainer.style.boxShadow =
+            "0 0 15px cyan, 0 0 30px magenta";
+    } else {
+        nitroContainer.style.boxShadow = "none";
+    }
 
     roadTexture.offset.y -= currentSpeed * 0.03;
 
