@@ -831,7 +831,7 @@ nitroContainer.addEventListener("touchstart", (e) => {
 
 nitroContainer.addEventListener("touchend", () => {
     nitroActive = false;
-}); f
+}); 
 
 // ======================
 // SWIPE CONTROLS (MULTI-TOUCH SAFE)
@@ -895,29 +895,6 @@ nitroBtn.addEventListener("touchstart", (e) => {
 nitroBtn.addEventListener("touchend", () => {
     nitroActive = false;
 });
-
-
-window.addEventListener("touchend", (e) => {
-
-    const touch = e.changedTouches[0];
-
-    const dx = touch.clientX - touchStartX;
-    const dy = touch.clientY - touchStartY;
-
-    // Ignore vertical swipes
-    if (Math.abs(dx) < Math.abs(dy)) return;
-
-    const SWIPE_THRESHOLD = 40;
-
-    if (dx > SWIPE_THRESHOLD && currentLane < lanes.length - 1) {
-        currentLane++;
-    }
-
-    if (dx < -SWIPE_THRESHOLD && currentLane > 0) {
-        currentLane--;
-    }
-
-}, { passive: true });
 
 /////////////////
 window.addEventListener("keyup", (e) => {
@@ -1402,3 +1379,11 @@ function wait(ms) {
 }
 
 startSequence();
+///////////SERVICE WORKER
+/*if ("serviceWorker" in navigator) {
+
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js");
+    });
+
+}*/

@@ -1,36 +1,41 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Bike Game</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div id="nitroContainer">
-    <div id="nitroBar"></div>
-</div>
-<div id="hud">Score: <span id="score">0</span></div>
-<div id="gameOver" style="display:none;">
-    <h1>Game Over</h1>
-    <div id="finalScore"></div>
-    <button onclick="location.reload()">Restart</button>
-</div>
-<div id="hud">
-    Score: <span id="score"></span><br>
-    Best: <span id="bestScore">0</span>
-</div>
-<div id="startOverlay">
-    <div id="startText">READY</div>
-</div>
-<div id="mobileControls">
-    <button id="nitroBtn">⚡</button>
-</div>
 
-<div id="controlsHUD">
-    ← → Switch Lanes<br>
-    Shift = Nitro
-</div>
-</div>
-<script type="module" src="main.js"></script>
+<head>
+    <title>Bike Runner Ultimate</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#ff00ff">
+</head>
+
+<body>
+
+    <div id="nitroContainer">
+        <div id="nitroFill"></div>
+    </div>
+    <div id="hud">Score: <span id="score">0</span></div>
+    <div id="gameOver" style="display:none;">
+        <h1>Game Over</h1>
+        <div id="finalScore"></div>
+        <button onclick="location.reload()">Restart</button>
+    </div>
+    <div id="hud">
+        Score: <span id="score"></span><br>
+        Best: <span id="bestScore">0</span>
+    </div>
+    <div id="startOverlay">
+        <div id="startText">READY</div>
+    </div>
+    <div id="mobileControls">
+        <button id="nitroBtn">⚡</button>
+    </div>
+
+    <div id="controlsHUD">
+        ← → Switch Lanes<br>
+        Shift = Nitro
+    </div>
+    </div>
+    <script type="module" src="main.js"></script>
 
 </body>
+
 </html>
