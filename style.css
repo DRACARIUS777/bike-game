@@ -61,6 +61,73 @@ body {
     background: linear-gradient(90deg, cyan, magenta);
 }
 
+/* ===== Top Right Leaderboard ===== */
+
+.neonPanel {
+    position: absolute;
+
+    top: 20px;
+    right: 20px;
+
+    width: 240px;          /* smaller */
+    padding: 12px;
+
+    border-radius: 12px;
+
+    background: rgba(10, 10, 20, 0.8);
+    backdrop-filter: blur(8px);
+
+    border: 2px solid #00f0ff;
+
+    box-shadow:
+        0 0 8px #00f0ff,
+        0 0 18px #00f0ff,
+        inset 0 0 10px rgba(0,255,255,0.2);
+
+    animation: neonPulse 2s infinite alternate;
+
+    z-index: 50;
+}
+
+.neonTitle {
+    font-size: 16px;
+    margin-bottom: 6px;
+}
+
+.leaderboardRow {
+    font-size: 14px;
+    padding: 4px 6px;
+}
+
+/* medals */
+
+.gold {
+    color: gold;
+    text-shadow: 0 0 12px gold;
+}
+
+.silver {
+    color: silver;
+    text-shadow: 0 0 12px silver;
+}
+
+.bronze {
+    color: #cd7f32;
+    text-shadow: 0 0 12px #cd7f32;
+}
+
+@keyframes neonPulse {
+    from {
+        box-shadow:
+            0 0 8px #00f0ff,
+            0 0 18px #00f0ff;
+    }
+    to {
+        box-shadow:
+            0 0 18px #00f0ff,
+            0 0 35px #00f0ff;
+    }
+}
 /* ===== MOBILE MODE ===== */
 @media (max-width: 768px) {
 
@@ -93,6 +160,34 @@ body {
         transition: transform 0.1s ease;
     }
 
+}
+.mobileNitro {
+    position: absolute;
+    bottom: 30px;
+    right: 25px;
+
+    width: 90px;
+    height: 90px;
+
+    border-radius: 50%;
+
+    border: 2px solid #00f0ff;
+
+    box-shadow:
+        0 0 12px #00f0ff,
+        0 0 25px #00f0ff;
+
+    overflow: hidden;
+}
+
+/* fill grows vertically */
+
+.mobileNitro .nitroFill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: cyan;
 }
 
 #gameOver button {

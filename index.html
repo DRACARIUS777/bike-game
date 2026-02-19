@@ -14,6 +14,10 @@
     </div>
     <div id="hud">Score: <span id="score">0</span></div>
     <div id="gameOver" style="display:none;">
+        <div id="leaderboardPanel" class="neonPanel">
+            <h2 class="neonTitle">TOP RIDERS</h2>
+            <div id="leaderboardList"></div>
+        </div>
         <h1>Game Over</h1>
         <div id="finalScore"></div>
         <button onclick="location.reload()">Restart</button>
@@ -33,6 +37,52 @@
         ← → Switch Lanes<br>
         Shift = Nitro
     </div>
+
+    <script type="module">
+
+        import { initializeApp } from
+            "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            getDocs,
+            query,
+            orderBy,
+            limit
+        } from
+            "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB381_m4z303I0O0-pLLRyfRA9FEMzioxw",
+            authDomain: "bike-runner-ultimate.firebaseapp.com",
+            projectId: "bike-runner-ultimate",
+            storageBucket: "bike-runner-ultimate.firebasestorage.app",
+            messagingSenderId: "647363638628",
+            appId: "1:647363638628:web:88283fdc39d9c297a83671"
+        };
+
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+
+        // expose globally for main.js
+        window.db = db;
+        window.fb = {
+            collection,
+            addDoc,
+            getDocs,
+            query,
+            orderBy,
+            limit
+        };
+
+    </script>
+
     </div>
     <script type="module" src="main.js"></script>
 

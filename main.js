@@ -1,5 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-
+const isMobile =
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 //ROAD TEXTURE
 function createNeonRoadTexture() {
 
@@ -116,6 +117,7 @@ function createNeonGrassTexture() {
     return texture;
 }
 
+
 const grassTexture = createNeonGrassTexture();
 
 //TREE TEXTURE
@@ -163,7 +165,10 @@ function createTree(x, z) {
 
 ///GAMEOVER
 
-function gameOver() {
+async function gameOver() {
+
+    if (isGameOver) return;
+
     isGameOver = true;
 
     const finalScore = Math.floor(score);
@@ -171,7 +176,6 @@ function gameOver() {
     finalScoreElement.textContent =
         "Final Score: " + finalScore;
 
-    // SAVE BEST SCORE
     if (finalScore > bestScore) {
         bestScore = finalScore;
         localStorage.setItem("bestScore", bestScore);
@@ -180,6 +184,16 @@ function gameOver() {
     bestScoreElement.textContent = bestScore;
 
     document.getElementById("gameOver").style.display = "flex";
+
+    const playerName =
+        localStorage.getItem("playerName") || "Player";
+
+    await submitScore(playerName, finalScore);
+
+    // 🔥 IMPORTANT — give firestore time
+    await new Promise(r => setTimeout(r, 300));
+
+    await loadLeaderboard();
 }
 
 ////////////////
@@ -397,6 +411,19 @@ for (let i = 0; i < 20; i++) {
     mountains.push(mountain);
 
 }
+///////ASK PLAYER NAME
+
+function askName() {
+
+    let name = localStorage.getItem("playerName");
+
+    if (!name) {
+        name = prompt("Enter your name:");
+        localStorage.setItem("playerName", name);
+    }
+}
+
+askName();
 
 //SPAWN TREES
 for (let i = 0; i < 40; i++) {
@@ -408,6 +435,102 @@ for (let i = 0; i < 40; i++) {
 
     createTree(x, z);
 }
+
+////////SCORE SUBMIT 
+function isScoreValid(scoreValue) {
+
+    if (typeof scoreValue !== "number") return false;
+
+    if (scoreValue < 0) return false;
+
+    // hard cap anti-cheat
+    if (scoreValue > 100000) return false;
+
+    return true;
+}
+async function submitScore(name, scoreValue) {
+
+    try {
+
+        if (!isScoreValid(scoreValue)) {
+            console.warn("Invalid score");
+            return;
+        }
+
+        const db = window.db;
+        const fb = window.fb;
+
+        await fb.addDoc(
+            fb.collection(db, "leaderboard"),
+            {
+                name,
+                score: Number(scoreValue),
+                created: Date.now()
+            }
+        );
+
+    } catch (err) {
+        console.error("Submit failed:", err);
+    }
+}
+//////TOP 10
+async function loadLeaderboard() {
+    if (!window.db || !window.fb) {
+        console.error("Firebase not ready");
+        return;
+    }
+    const db = window.db;
+    const fb = window.fb;
+
+    const list =
+        document.getElementById("leaderboardList");
+
+    if (!list) return;
+
+    list.innerHTML = "Loading...";
+
+    try {
+
+        const q = fb.query(
+            fb.collection(db, "leaderboard"),
+            fb.orderBy("score", "desc"),
+            fb.limit(10)
+        );
+
+        const snapshot = await fb.getDocs(q);
+
+        list.innerHTML = "";
+
+        let index = 0;
+
+        snapshot.forEach(doc => {
+
+            const data = doc.data();
+
+            let rankClass = "";
+            if (index === 0) rankClass = "gold";
+            if (index === 1) rankClass = "silver";
+            if (index === 2) rankClass = "bronze";
+
+            const row = document.createElement("div");
+            row.className =
+                "leaderboardRow " + rankClass;
+
+            row.innerHTML =
+                `${index + 1}. ${data.name}
+                 <span>${data.score}</span>`;
+
+            list.appendChild(row);
+
+            index++;
+        });
+
+    } catch (err) {
+        console.error(err);
+        list.innerHTML = "Error loading";
+    }
+}
+
 // TRAFFIC CAR
 function createTrafficCar() {
 
@@ -820,18 +943,18 @@ window.addEventListener("keydown", (e) => {
 });
 
 ///////NITRO MOBILE
-const nitroContainer =
-    document.getElementById("nitroContainer");
+if (isMobile) {
 
-// Hold to boost
-nitroContainer.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    nitroActive = true;
-}, { passive: false });
+    nitroContainer.classList.add("mobileNitro");
 
-nitroContainer.addEventListener("touchend", () => {
-    nitroActive = false;
-}); 
+    nitroContainer.addEventListener("touchstart", () => {
+        if (nitro > 10) nitroActive = true;
+    });
+
+    nitroContainer.addEventListener("touchend", () => {
+        nitroActive = false;
+    });
+}
 
 // ======================
 // SWIPE CONTROLS (MULTI-TOUCH SAFE)
@@ -1107,8 +1230,17 @@ function animate() {
     }
     const nitroFill = document.getElementById("nitroFill");
 
-    nitroFill.style.height =
-        (nitro / maxNitro * 100) + "%";
+    if (isMobile) {
+
+        nitroFill.style.height =
+            (nitro / maxNitro * 100) + "%";
+
+    } else {
+
+        nitroFill.style.width =
+            (nitro / maxNitro * 100) + "%";
+
+    }
 
     if (nitroActive) {
         nitroContainer.style.transform = "scale(0.9)";
