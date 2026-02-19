@@ -182,6 +182,16 @@ function gameOver() {
     document.getElementById("gameOver").style.display = "flex";
 }
 
+////////////////
+//SCREEN SCROLL
+///////////////////
+document.body.addEventListener(
+    "touchmove",
+    e => e.preventDefault(),
+    { passive: false }
+);
+
+
 //////////////////////
 // BASIC SETUP
 //////////////////////
@@ -482,6 +492,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 renderer.toneMappingExposure = 1.2;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 let isGameOver = false;
 const gameOverScreen = document.getElementById("gameOver");
 let shakeIntensity = 0;
@@ -807,6 +818,94 @@ window.addEventListener("keydown", (e) => {
     }
 
 });
+
+// ======================
+// SWIPE CONTROLS (MULTI-TOUCH SAFE)
+// ======================
+
+let swipeTouchId = null;
+let startX = 0;
+
+window.addEventListener("touchstart", (e) => {
+
+    for (let touch of e.changedTouches) {
+
+        // Ignore touches on nitro button
+        if (touch.target === nitroBtn) continue;
+
+        swipeTouchId = touch.identifier;
+        startX = touch.clientX;
+    }
+
+}, { passive: true });
+
+
+window.addEventListener("touchend", (e) => {
+
+    for (let touch of e.changedTouches) {
+
+        if (touch.identifier !== swipeTouchId) continue;
+
+        const dx = touch.clientX - startX;
+
+        const SWIPE_THRESHOLD = 40;
+
+        if (dx > SWIPE_THRESHOLD && currentLane < lanes.length - 1) {
+            currentLane++;
+        }
+
+        if (dx < -SWIPE_THRESHOLD && currentLane > 0) {
+            currentLane--;
+        }
+
+        swipeTouchId = null;
+    }
+
+}, { passive: true });
+
+///////////////////////
+const nitroBtn = document.getElementById("nitroBtn");
+window.addEventListener("DOMContentLoaded", () => {
+
+    if (!("ontouchstart" in window)) {
+        document.getElementById("mobileControls").style.display = "none";
+    }
+
+});
+
+nitroBtn.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    nitroActive = true;
+}, { passive: false });
+
+nitroBtn.addEventListener("touchend", () => {
+    nitroActive = false;
+});
+
+
+window.addEventListener("touchend", (e) => {
+
+    const touch = e.changedTouches[0];
+
+    const dx = touch.clientX - touchStartX;
+    const dy = touch.clientY - touchStartY;
+
+    // Ignore vertical swipes
+    if (Math.abs(dx) < Math.abs(dy)) return;
+
+    const SWIPE_THRESHOLD = 40;
+
+    if (dx > SWIPE_THRESHOLD && currentLane < lanes.length - 1) {
+        currentLane++;
+    }
+
+    if (dx < -SWIPE_THRESHOLD && currentLane > 0) {
+        currentLane--;
+    }
+
+}, { passive: true });
+
+/////////////////
 window.addEventListener("keyup", (e) => {
     keys[e.key] = false;
     if (e.key === "Shift") nitroActive = false;
